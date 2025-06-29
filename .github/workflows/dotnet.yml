@@ -43,15 +43,24 @@ jobs:
     - name: Build the application
       run: dotnet build --no-restore --configuration Release /p:ContinuousIntegrationBuild=true
 
-    - name: Run tests
-      run: dotnet test --no-restore --no-build --logger "console;verbosity=detailed" --logger "trx;verbosity=normal" --collect:"XPlat Code Coverage" --results-directory "TestResults"
-      env:
-        Configuration: ${{ matrix.configuration }}
+    - name: Run tests 8.0
+      run: dotnet test --no-restore --no-build --logger "console;verbosity=detailed" --logger "trx;verbosity=normal" --collect:"XPlat Code Coverage" --results-directory "TestResults-net8.0" -f net8.0
 
-    - name: Upload dotnet test results
+    - name: Run tests 9.0
+      run: dotnet test --no-restore --no-build --logger "console;verbosity=detailed" --logger "trx;verbosity=normal" --collect:"XPlat Code Coverage" --results-directory "TestResults-net8.0" -f net8.0
+
+    - name: Upload dotnet 8.0 test results
       uses: actions/upload-artifact@v4
       with:
-        name: dotnet-results
-        path: TestResults
+        name: dotnet-results-net8.0
+        path: TestResults-net8.0
+      # Use always() to always run this step to publish test results when there are test failures
+      if: ${{ always() }}
+
+    - name: Upload dotnet 9.0 test results
+      uses: actions/upload-artifact@v4
+      with:
+        name: dotnet-results-net9.0
+        path: TestResults-net9.0
       # Use always() to always run this step to publish test results when there are test failures
       if: ${{ always() }}

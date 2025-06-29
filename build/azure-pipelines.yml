@@ -25,11 +25,10 @@ parameters:
     displayName: Build Commit IDs
     default: ' '
   - name: project_to_build
-    type: string
+    type: stringList
     displayName: Project To Build
-    default: ' '
+    default: ''
     values:
-      - ' '
       - 'C3D.Extensions.Networking.PortAllocator'
 
 trigger:

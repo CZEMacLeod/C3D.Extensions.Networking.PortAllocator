@@ -158,6 +158,7 @@ steps:
     versionSelector: 'latestStable'
 
 - task: NuGetCommand@2
+  displayName: 'NuGet Restore'
   inputs:
     command: 'restore'
     restoreSolution: '$(solution)'

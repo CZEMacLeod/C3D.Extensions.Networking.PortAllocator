@@ -90,6 +90,7 @@
     <PropertyGroup>
       <BuildProject>$(CommitIDFound)</BuildProject>
       <BuildProject Condition="'$(MSBuildProjectName)'=='%(_Temporary.Identity)'">true</BuildProject>
+      <BuildProject Condition="'%(ProjectReference.Filename)'=='%(_Temporary.Identity)'">true</BuildProject>
     </PropertyGroup>
     <Message Importance="high" Text="BuildProject: $(BuildProject)" />
 

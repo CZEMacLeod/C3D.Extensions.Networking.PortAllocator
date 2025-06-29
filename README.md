@@ -1,7 +1,11 @@
-# C3D.Extensions.Networking.PortAllocator
+# C3D.Extensions.Networking
 
-[![Build Status](https://dev.azure.com/flexviews/OSS.Build/_apis/build/status%2FCZEMacLeod.C3D.Extensions.Playwright.AspNetCore?branchName=main)](https://dev.azure.com/flexviews/OSS.Build/_build/latest?definitionId=86&branchName=main)
+[![Build Status](https://dev.azure.com/flexviews/OSS.Build/_apis/build/status%2FCZEMacLeod.C3D.Extensions.Networking.PortAllocator?branchName=main)](https://dev.azure.com/flexviews/OSS.Build/_build/latest?definitionId=89&branchName=main)
 [![.NET](https://github.com/CZEMacLeod/C3D.Extensions.Networking.PortAllocator/actions/workflows/dotnet.yml/badge.svg)](https://github.com/CZEMacLeod/C3D.Extensions.Networking.PortAllocator/actions/workflows/dotnet.yml)
+![Code Coverage](https://img.shields.io/badge/Code%20Coverage-91%25-success?style=flat)
+![License](https://img.shields.io/github/license/CZEMacLeod/C3D.Extensions.Networking.PortAllocator.svg)
+
+# C3D.Extensions.Networking.PortAllocator
 
 [![NuGet package](https://img.shields.io/nuget/v/C3D.Extensions.Networking.PortAllocator.svg)](https://nuget.org/packages/C3D.Extensions.Networking.PortAllocator)
 [![NuGet downloads](https://img.shields.io/nuget/dt/C3D.Extensions.Networking.PortAllocator.svg)](https://nuget.org/packages/C3D.Extensions.Networking.PortAllocator)

@@ -89,9 +89,12 @@
     <Message Importance="high" Text="Projects To Build: %(_Temporary.Identity)" />
     <PropertyGroup>
       <BuildProject>$(CommitIDFound)</BuildProject>
-      <BuildProject Condition="'$(MSBuildProjectName)'=='%(_Temporary.Identity)'">true</BuildProject>
-      <BuildProject Condition="'%(ProjectReference.Filename)'=='%(_Temporary.Identity)'">true</BuildProject>
+      <BuildProject Condition="'$(ProjectToBuild)'!='' and '$(MSBuildProjectName)'=='%(_Temporary.Identity)'">true</BuildProject>
+      <BuildProject Condition="'$(ProjectToBuild)'!='' and '%(ProjectReference.Filename)'=='%(_Temporary.Identity)'">true</BuildProject>
     </PropertyGroup>
+    <Message Importance="high" Condition="'$(ProjectToBuild)'!='' and '$(MSBuildProjectName)'=='%(_Temporary.Identity)'" Text="Build This Project: $(MSBuildProjectName)" />
+    <Message Importance="high" Condition="'$(ProjectToBuild)'!='' and '%(ProjectReference.Filename)'=='%(_Temporary.Identity)'" Text="Build Referenced Project: %(ProjectReference.Filename)" />
+    
     <Message Importance="high" Text="BuildProject: $(BuildProject)" />
 
     <ItemGroup>

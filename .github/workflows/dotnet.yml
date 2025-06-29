@@ -20,9 +20,6 @@ jobs:
 
     runs-on: ubuntu-latest  # For a list of available runner types, refer to
                              # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
-    strategy:
-      matrix:
-        dotnet-version: [ '8.0.x', '9.0.x' ]
 
     steps:
     - name: Checkout
@@ -34,7 +31,9 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-quality: 'ga'
-        dotnet-version: ${{ matrix.dotnet-version }}
+        dotnet-version: |
+            '8.0.x'
+            '9.0.x'
 
     # Restore the application to populate the obj folder with RuntimeIdentifiers
     - name: Restore the application
@@ -45,14 +44,14 @@ jobs:
       run: dotnet build --no-restore --configuration Release /p:ContinuousIntegrationBuild=true
 
     - name: Run tests
-      run: dotnet test --no-restore --no-build --logger "console;verbosity=detailed" --logger "trx;verbosity=normal" --collect:"XPlat Code Coverage" --results-directory "TestResults-${{ matrix.dotnet-version }}"
+      run: dotnet test --no-restore --no-build --logger "console;verbosity=detailed" --logger "trx;verbosity=normal" --collect:"XPlat Code Coverage" --results-directory "TestResults"
       env:
         Configuration: ${{ matrix.configuration }}
 
     - name: Upload dotnet test results
       uses: actions/upload-artifact@v4
       with:
-        name: dotnet-results-${{ matrix.dotnet-version }}
-        path: TestResults-${{ matrix.dotnet-version }}
+        name: dotnet-results
+        path: TestResults
       # Use always() to always run this step to publish test results when there are test failures
       if: ${{ always() }}

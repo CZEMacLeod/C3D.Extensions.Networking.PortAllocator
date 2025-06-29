@@ -27,7 +27,7 @@ parameters:
   - name: project_to_build
     type: stringList
     displayName: Project To Build
-    default: ''
+    default: []
     values:
       - 'C3D.Extensions.Networking.PortAllocator'
 

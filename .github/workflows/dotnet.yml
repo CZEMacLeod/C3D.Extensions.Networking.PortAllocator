@@ -44,26 +44,26 @@ jobs:
       run: dotnet build --no-restore --configuration Release /p:ContinuousIntegrationBuild=true
 
     - name: Run tests 8.0
-      run: dotnet test --no-restore --no-build --configuration Release --logger "console;verbosity=detailed" --logger "trx;verbosity=normal" --collect:"XPlat Code Coverage" --results-directory "TestResults-net8.0" -f net8.0
+      run: dotnet test --no-restore --no-build --configuration Release --logger "console;verbosity=detailed" --logger "trx;verbosity=normal" --collect:"XPlat Code Coverage" --results-directory "TestResults/net8.0" -f net8.0
 
     - name: Run tests 9.0
-      run: dotnet test --no-restore --no-build --configuration Release --logger "console;verbosity=detailed" --logger "trx;verbosity=normal" --collect:"XPlat Code Coverage" --results-directory "TestResults-net9.0" -f net8.0
+      run: dotnet test --no-restore --no-build --configuration Release --logger "console;verbosity=detailed" --logger "trx;verbosity=normal" --collect:"XPlat Code Coverage" --results-directory "TestResults/net9.0" -f net8.0
 
-    - name: Upload dotnet 8.0 test results
-      uses: actions/upload-artifact@v4
-      with:
-        name: dotnet-results-net8.0
-        path: TestResults-net8.0
-      # Use always() to always run this step to publish test results when there are test failures
-      if: ${{ always() }}
+    # - name: Upload dotnet 8.0 test results
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: dotnet-results-net8.0
+    #     path: TestResults/net8.0
+    #   # Use always() to always run this step to publish test results when there are test failures
+    #   if: ${{ always() }}
 
-    - name: Upload dotnet 9.0 test results
-      uses: actions/upload-artifact@v4
-      with:
-        name: dotnet-results-net9.0
-        path: TestResults-net9.0
-      # Use always() to always run this step to publish test results when there are test failures
-      if: ${{ always() }}
+    # - name: Upload dotnet 9.0 test results
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: dotnet-results-net9.0
+    #     path: TestResults/net9.0
+    #   # Use always() to always run this step to publish test results when there are test failures
+    #   if: ${{ always() }}
 
     - name: Combine Coverage Reports # This is because one report is produced per project, and we want one result for all of them.
       uses: danielpalme/ReportGenerator-GitHub-Action@v5.4.7
@@ -116,4 +116,5 @@ jobs:
       if: always()
       with:
           # NOTE: using trx_files instead of files due to https://github.com/EnricoMi/publish-unit-test-result-action/issues/424
-          trx_files: "${{ github.workspace }}/**/*.trx"
+          files: |
+            ${{ github.workspace }}/**/TestResults/**/*.trx

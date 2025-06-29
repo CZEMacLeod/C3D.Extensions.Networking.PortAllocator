@@ -48,11 +48,11 @@ internal static class BitArrayExtensions
     /// </summary>
     /// <param name="bitArray">The <see cref="BitArray"/> to check.</param>
     /// <param name="min">The inclusive lower bound of the range to check.</param>
-    /// <param name="max">The exclusive upper bound of the range to check.</param>
+    /// <param name="max">The inclusive upper bound of the range to check.</param>
     /// <returns><c>true</c> if all bits in the specified range are set; otherwise, <c>false</c>.</returns>
     internal static bool HasAllSet(this BitArray bitArray, int min, int max)
     {
-        for (int i = min; i < max; i++)
+        for (int i = min; i <= max; i++)
         {
             if (!bitArray[i])
             {

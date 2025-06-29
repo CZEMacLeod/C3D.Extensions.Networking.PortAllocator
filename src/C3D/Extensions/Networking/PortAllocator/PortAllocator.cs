@@ -263,7 +263,7 @@ public partial class PortAllocator
     /// <exception cref="InvalidOperationException">Thrown if the port is already allocated.</exception>
     public void MarkPortAsUsed(int port)
     {
-        Guard.IsBetween(port, 1, 65535, nameof(port));
+        Guard.IsBetween(port, 0, 65536, nameof(port));
         lock (@lock)
         {
             var ap = AllocatedPorts;
@@ -287,7 +287,7 @@ public partial class PortAllocator
     /// <exception cref="ArgumentOutOfRangeException">Thrown if <paramref name="port"/> is outside the valid range.</exception>
     public bool MarkPortAsFree(int port)
     {
-        Guard.IsBetween(port, 1, 65535, nameof(port));
+        Guard.IsBetween(port, 0, 65536, nameof(port));
         bool used;
         lock (@lock)
         {
@@ -317,7 +317,7 @@ public partial class PortAllocator
     /// <exception cref="ArgumentOutOfRangeException">Thrown if <paramref name="port"/> is outside the valid range.</exception>
     public bool TryMarkPortAsUsed(int port)
     {
-        Guard.IsBetween(port, 1, 65535, nameof(port));
+        Guard.IsBetween(port, 0, 65536, nameof(port));
         bool used;
         lock (@lock)
         {
@@ -353,8 +353,8 @@ public partial class PortAllocator
     /// </exception>
     public int GetRandomFreePort(int minPort, int maxPort = 65535)
     {
-        Guard.IsBetween(minPort, 1, 65535, nameof(minPort));
-        Guard.IsBetween(maxPort, 1, 65535, nameof(maxPort));
+        Guard.IsBetween(minPort, 0, 65536, nameof(minPort));
+        Guard.IsBetween(maxPort, 0, 65536, nameof(maxPort));
         Guard.IsGreaterThanOrEqualTo(maxPort, minPort, nameof(maxPort));
 
         if (minPort < 1000)

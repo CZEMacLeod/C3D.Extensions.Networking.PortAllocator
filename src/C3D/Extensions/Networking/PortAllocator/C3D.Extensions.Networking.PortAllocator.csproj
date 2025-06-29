@@ -4,6 +4,7 @@
     <TargetFrameworks>netstandard2.0;net48;net8.0;net9.0</TargetFrameworks>
     <langVersion>13.0</langVersion>
     <Nullable>Enable</Nullable>
+    <AssemblyTitle>$(AssemblyTitle) Networking PortAllocator</AssemblyTitle>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,5 +15,11 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>-->
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageTag Include="Networking" />
+    <PackageTag Include="TCP" />
+    <PackageTag Include="Ports" />
   </ItemGroup>
 </Project>

@@ -3,7 +3,45 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36221.1 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "C3D.Extensions.Networking.PortAllocator", "C3D.Extensions.Networking.PortAllocator\C3D.Extensions.Networking.PortAllocator.csproj", "{D43EFD75-A98F-47BD-8E99-BF690AEF1712}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE.txt = LICENSE.txt
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		.gitignore = .gitignore
+		build\azure-pipelines.yml = build\azure-pipelines.yml
+		build\ConvertTo-MarkdownTable.ps1 = build\ConvertTo-MarkdownTable.ps1
+		.github\dependabot.yml = .github\dependabot.yml
+		build\DetectPackages.ps1 = build\DetectPackages.ps1
+		build\devcert.pfx = build\devcert.pfx
+		Directory.Build.props = Directory.Build.props
+		Directory.Build.targets = Directory.Build.targets
+		.github\workflows\dotnet-msbuild-vstest.yml = .github\workflows\dotnet-msbuild-vstest.yml
+		global.json = global.json
+		build\ImportCert.ps1 = build\ImportCert.ps1
+		build\nuget.publish.config = build\nuget.publish.config
+		build\Test.snk = build\Test.snk
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{A333AF3F-E3DA-4CA6-A2FB-7DA19003D3AA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "C3D.Extensions.Networking.PortAllocator", "src\C3D\Extensions\Networking\PortAllocator\C3D.Extensions.Networking.PortAllocator.csproj", "{86172BB3-C613-6892-495C-8BAED46C7030}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "C3D.Extensions", "C3D.Extensions", "{7972553A-D6D3-40DA-851E-9703BD9894FA}"
+	ProjectSection(SolutionItems) = preProject
+		src\C3D\Extensions\Directory.Build.props = src\C3D\Extensions\Directory.Build.props
+		src\C3D\Extensions\Directory.Build.Targets = src\C3D\Extensions\Directory.Build.Targets
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Networking", "Networking", "{BE69D4A1-A732-4422-A1AF-9957CE345AA0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{C7172224-1EB8-42D3-9803-067F627E8889}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PortAllocator.Tests", "tests\PortAllocatorTests\PortAllocator.Tests.csproj", "{104E0EC3-20E3-418A-AEC7-EFD4A0054F11}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,13 +49,23 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D43EFD75-A98F-47BD-8E99-BF690AEF1712}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D43EFD75-A98F-47BD-8E99-BF690AEF1712}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D43EFD75-A98F-47BD-8E99-BF690AEF1712}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D43EFD75-A98F-47BD-8E99-BF690AEF1712}.Release|Any CPU.Build.0 = Release|Any CPU
+		{86172BB3-C613-6892-495C-8BAED46C7030}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86172BB3-C613-6892-495C-8BAED46C7030}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86172BB3-C613-6892-495C-8BAED46C7030}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86172BB3-C613-6892-495C-8BAED46C7030}.Release|Any CPU.Build.0 = Release|Any CPU
+		{104E0EC3-20E3-418A-AEC7-EFD4A0054F11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{104E0EC3-20E3-418A-AEC7-EFD4A0054F11}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{104E0EC3-20E3-418A-AEC7-EFD4A0054F11}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{104E0EC3-20E3-418A-AEC7-EFD4A0054F11}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{86172BB3-C613-6892-495C-8BAED46C7030} = {BE69D4A1-A732-4422-A1AF-9957CE345AA0}
+		{7972553A-D6D3-40DA-851E-9703BD9894FA} = {A333AF3F-E3DA-4CA6-A2FB-7DA19003D3AA}
+		{BE69D4A1-A732-4422-A1AF-9957CE345AA0} = {7972553A-D6D3-40DA-851E-9703BD9894FA}
+		{104E0EC3-20E3-418A-AEC7-EFD4A0054F11} = {C7172224-1EB8-42D3-9803-067F627E8889}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AF1EE528-CA33-466C-BE43-B59B0A637FF3}

@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net48;net8.0;net9.0</TargetFrameworks>
+    <langVersion>13.0</langVersion>
+    <Nullable>Enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--<PackageReference Include="PolyfillLib" Version="8.2.0" />-->
+    <PackageReference Include="CommunityToolkit.Diagnostics" Version="8.4.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.6" /> <!--  Condition="'$(TargetFramework)'=='netstandard2.0' and '$(TargetFramework)'=='net48'" -->
+    <!--<PackageReference Include="Meziantou.Polyfill" Version="1.0.49">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>-->
+  </ItemGroup>
+</Project>

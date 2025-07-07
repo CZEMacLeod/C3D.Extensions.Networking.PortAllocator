@@ -146,4 +146,64 @@ public class PortAllocatorTest(ITestOutputHelper outputHelper)
 
         Assert.Equal(ports1, ports2); // Should return the same sequence of ports for the same seed
     }
+
+    [Fact]
+    public void TryGetRandomFreePort_ReturnsTrueAndAllocates()
+    {
+        var allocator = new PortAllocator();
+        bool result = allocator.TryGetRandomFreePort(60000, 60010, out int port);
+        Assert.True(result);
+        Assert.InRange(port, 60000, 60010);
+        allocator.MarkPortAsFree(port); // Clean up
+    }
+
+    [Fact]
+    public void TryGetRandomFreePort_ReturnsFalseIfNoFreePorts()
+    {
+        var allocator = new PortAllocator();
+        int min = 61000, max = 61002;
+        for (int i = min; i <= max; i++)
+            allocator.MarkPortAsUsed(i);
+        bool result = allocator.TryGetRandomFreePort(min, max, out int port);
+        Assert.False(result);
+        Assert.Equal(-1, port);
+        for (int i = min; i <= max; i++)
+            allocator.MarkPortAsFree(i); // Clean up
+    }
+
+    [Fact]
+    public void GetFreePortCount_ReturnsCorrectCount()
+    {
+        var allocator = new PortAllocator();
+        int min = 62000, max = 62004;
+        int initial = allocator.GetFreePortCount(min, max);
+        int port = allocator.GetRandomFreePort(min, max);
+        int after = allocator.GetFreePortCount(min, max);
+        Assert.Equal(initial - 1, after);
+        allocator.MarkPortAsFree(port); // Clean up
+    }
+
+    [Fact]
+    public void GetFreePorts_ReturnsAllFreePorts()
+    {
+        var allocator = new PortAllocator();
+        int min = 63000, max = 63002;
+        var ports = allocator.GetFreePorts(min, max);
+        Assert.Equal(new[] { 63000, 63001, 63002 }, ports);
+        allocator.MarkPortAsUsed(63001);
+        ports = allocator.GetFreePorts(min, max);
+        Assert.Equal(new[] { 63000, 63002 }, ports);
+        allocator.MarkPortAsFree(63001); // Clean up
+    }
+
+    [Fact]
+    public void GetFreePortCount_EntireRange_DecreasesOnAllocation()
+    {
+        var allocator = new PortAllocator();
+        int before = allocator.GetFreePortCount();
+        int port = allocator.GetRandomFreePort();
+        int after = allocator.GetFreePortCount();
+        Assert.Equal(before - 1, after);
+        allocator.MarkPortAsFree(port); // Clean up
+    }
 }

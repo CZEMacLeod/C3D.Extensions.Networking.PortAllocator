@@ -3,9 +3,11 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Net.NetworkInformation;
 using System.Threading;
-using System.Diagnostics.CodeAnalysis;
 
 namespace C3D.Extensions.Networking;
 
@@ -237,12 +239,18 @@ public partial class PortAllocator
 
                     try
                     {
-                        IPGlobalProperties ipGlobalProperties = IPGlobalProperties.GetIPGlobalProperties();
-                        TcpConnectionInformation[] tcpConnInfoArray = ipGlobalProperties.GetActiveTcpConnections();
+                        var ipGlobalProperties = IPGlobalProperties.GetIPGlobalProperties();
+                        var tcpConnInfoArray = ipGlobalProperties.GetActiveTcpConnections();
 
-                        foreach (TcpConnectionInformation tcpi in tcpConnInfoArray)
+                        foreach (var tcpci in tcpConnInfoArray)
                         {
-                            allocatedPorts[tcpi.LocalEndPoint.Port] = true;
+                            allocatedPorts[tcpci.LocalEndPoint.Port] = true;
+                        }
+
+                        var tcpListenerArray = ipGlobalProperties.GetActiveTcpListeners();
+                        foreach (var tcpl in tcpConnInfoArray)
+                        {
+                            allocatedPorts[tcpl.LocalEndPoint.Port] = true;
                         }
                     }
                     catch (Exception ex)
@@ -380,6 +388,51 @@ public partial class PortAllocator
     }
 
     /// <summary>
+    /// Attempts to allocate a random free port within the specified range.
+    /// </summary>
+    /// <param name="minPort">The minimum port number (inclusive).</param>
+    /// <param name="maxPort">The maximum port number (inclusive).</param>
+    /// <param name="port">
+    /// When this method returns, contains the allocated port number if successful; otherwise, <c>-1</c>.
+    /// </param>
+    /// <returns>
+    /// <c>true</c> if a free port was found and allocated; otherwise, <c>false</c>.
+    /// </returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown if <paramref name="minPort"/> or <paramref name="maxPort"/> is outside the valid range (0 to 65535).
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown if <paramref name="maxPort"/> is less than <paramref name="minPort"/>.
+    /// </exception>
+    public bool TryGetRandomFreePort(int minPort, int maxPort, [MaybeNullWhen(false)] out int port)
+    {
+        Guard.IsBetween(minPort, 0, 65536, nameof(minPort));
+        Guard.IsBetween(maxPort, 0, 65536, nameof(maxPort));
+        Guard.IsGreaterThanOrEqualTo(maxPort, minPort, nameof(maxPort));
+
+        if (minPort < 1000)
+        {
+            LogMinPortBelowRecommended(logger, minPort);
+        }
+        lock (@lock)
+        {
+            var ap = AllocatedPorts;
+            var ports = Enumerable.Range(minPort, maxPort - minPort + 1)
+                .Where(p => !ap[p])
+                .ToArray();
+            if (ports.Length == 0)
+            {
+                port = -1;
+                return false;
+            }
+            port = ports[Random.Next(ports.Length)];
+            ap[port] = true;
+        }
+        LogAllocatedRandomFreePort(logger, port);
+        return true;
+    }
+
+    /// <summary>
     /// Returns a random free port in the range 1000 to 65535 (inclusive of 1000, exclusive of 65536) and marks it as used.
     /// </summary>
     /// <remarks>
@@ -389,4 +442,63 @@ public partial class PortAllocator
     /// A randomly selected free port number in the default range.
     /// </returns>
     public int GetRandomFreePort() => GetRandomFreePort(1000, 65535);
+
+    /// <summary>
+    /// Gets the number of free (unallocated) ports in the entire port range.
+    /// </summary>
+    /// <returns>The count of free ports.</returns>
+    public int GetFreePortCount() => AllocatedPorts.Length - AllocatedPorts.CountSetBits();
+
+    /// <summary>
+    /// Gets the number of free (unallocated) ports in the specified range.
+    /// </summary>
+    /// <param name="minPort">The minimum port number (inclusive).</param>
+    /// <param name="maxPort">The maximum port number (inclusive).</param>
+    /// <returns>The count of free ports in the specified range.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown if <paramref name="minPort"/> or <paramref name="maxPort"/> is outside the valid range (0 to 65535).
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown if <paramref name="maxPort"/> is less than <paramref name="minPort"/>.
+    /// </exception>
+    public int GetFreePortCount(int minPort, int maxPort)
+    {
+        Guard.IsBetween(minPort, 0, 65536, nameof(minPort));
+        Guard.IsBetween(maxPort, 0, 65536, nameof(maxPort));
+        Guard.IsGreaterThanOrEqualTo(maxPort, minPort, nameof(maxPort));
+        lock (@lock)
+        {
+            var ap = AllocatedPorts;
+            return Enumerable.Range(minPort, maxPort - minPort + 1)
+                .Where(p => !ap[p])
+                .Count();
+        }
+    }
+
+    /// <summary>
+    /// Gets an array of all free (unallocated) ports in the specified range.
+    /// </summary>
+    /// <param name="minPort">The minimum port number (inclusive).</param>
+    /// <param name="maxPort">The maximum port number (inclusive).</param>
+    /// <returns>An array of free port numbers in the specified range.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown if <paramref name="minPort"/> or <paramref name="maxPort"/> is outside the valid range (0 to 65535).
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown if <paramref name="maxPort"/> is less than <paramref name="minPort"/>.
+    /// </exception>
+    public int[] GetFreePorts(int minPort, int maxPort)
+    {
+        Guard.IsBetween(minPort, 0, 65536, nameof(minPort));
+        Guard.IsBetween(maxPort, 0, 65536, nameof(maxPort));
+        Guard.IsGreaterThanOrEqualTo(maxPort, minPort, nameof(maxPort));
+
+        lock (@lock)
+        {
+            var ap = AllocatedPorts;
+            return Enumerable.Range(minPort, maxPort - minPort + 1)
+                .Where(p => !ap[p])
+                .ToArray();
+        }
+    }
 }

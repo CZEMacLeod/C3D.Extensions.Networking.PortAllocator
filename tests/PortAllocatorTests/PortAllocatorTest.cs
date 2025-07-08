@@ -98,7 +98,7 @@ public class PortAllocatorTest(ITestOutputHelper outputHelper)
     {
         var allocator = new PortAllocator();
         // Use a small range for test speed
-        int min = 50000, max = 50002;
+        int min = 60000, max = 60002;
         for (int port = min; port <= max; port++)
             allocator.MarkPortAsUsed(port);
 

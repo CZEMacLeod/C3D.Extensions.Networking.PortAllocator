@@ -1,13 +1,15 @@
 ﻿using CommunityToolkit.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net.NetworkInformation;
-using System.Threading;
+using System.Text.RegularExpressions;
 
 namespace C3D.Extensions.Networking;
 
@@ -119,49 +121,90 @@ public partial class PortAllocator
 ];
     private static BitArray? allocatedPorts;
 #if NET9_0_OR_GREATER
-    private static readonly Lock @lock = new();
+    private static readonly System.Threading.Lock @lock = new();
 #else
     private static readonly object @lock = new();
 #endif
 
+    private PortAllocatorOptions options;
     private readonly ILogger logger;
 
+    private int? randomSeed;
     private Random? random;
-    private Random Random => random ??= new Random();
-
-    private PortAllocator(Random? random, ILogger logger)
-    {
-        this.random = random
+    private Random Random => random ??= randomSeed is null ?
 #if NET8_0_OR_GREATER
-            ?? Random.Shared
+        Random.Shared
+#else
+        new Random()
 #endif
-            ;
+        : new Random(randomSeed.Value);
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PortAllocator"/> class with a logger and options.
+    /// </summary>
+    /// <param name="logger">The logger to use for diagnostic messages.</param>
+    /// <param name="options">The port allocator options.</param>
+    public PortAllocator(ILogger logger, PortAllocatorOptions? options)
+    {
+        this.options = options ?? new PortAllocatorOptions();
+        this.randomSeed = this.options.Seed;
+        this.random = null;
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PortAllocator"/> class for dependency injection.
+    /// </summary>
+    /// <param name="logger">The logger to use for diagnostic messages.</param>
+    /// <param name="options">The options monitor for port allocator options.</param>
+    [ActivatorUtilitiesConstructor]
+    private PortAllocator(ILogger logger, IOptionsMonitor<PortAllocatorOptions>? options) : this(logger, options?.CurrentValue.Clone())
+    {
+        options?.OnChange(o =>
+        {
+            if (o.Seed.HasValue && o.Seed != randomSeed)
+            {
+                this.randomSeed = o.Seed;
+                this.random = null;
+            }
+
+            if (allocatedPorts is not null)
+            {
+                lock (@lock)
+                {
+                    if (!this.options.ExcludeWellKnownPorts && o.ExcludeWellKnownPorts)
+                        PortAllocator.ExcludeWellKnownPorts(allocatedPorts);
+                    ExcludePorts(allocatedPorts, o.ExcludedPorts.Except(this.options.ExcludedPorts));
+                    if (!this.options.ScanInUsePorts && o.ScanInUsePorts)
+                        TryScanInUsePorts_Internal(allocatedPorts);
+                    if (!this.options.ExcludeEphemeralPorts && o.ExcludeEphemeralPorts)
+                        ExcludeEphemeralPorts(allocatedPorts);
+                    if (!this.options.ScanExcludedPorts && o.ScanExcludedPorts)
+                        ScanExcludedPorts(allocatedPorts);
+                }
+            }
+            this.options = o.Clone();
+        });
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PortAllocator"/> class using a new <see cref="Random"/> instance and a no-op logger.
     /// </summary>
-    public PortAllocator() : this(null, NullLogger.Instance) { }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="PortAllocator"/> class using a new <see cref="Random"/> instance and the specified logger.
-    /// </summary>
-    /// <param name="logger">The logger to use for diagnostic messages.</param>
-    public PortAllocator(ILogger<PortAllocator> logger) : this(null, logger) { }
+    /// <param name="options">The options monitor for port allocator options.</param>
+    public PortAllocator(IOptionsMonitor<PortAllocatorOptions>? options = null) : this(NullLogger.Instance, options) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PortAllocator"/> class using a seeded <see cref="Random"/> instance and a no-op logger.
     /// </summary>
     /// <param name="seed">The seed for the random number generator.</param>
-    public PortAllocator(int seed) : this(new Random(seed), NullLogger.Instance) { }
+    public PortAllocator(int seed) : this(NullLogger.Instance, new PortAllocatorOptions() { Seed = seed }) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PortAllocator"/> class using a seeded <see cref="Random"/> instance and the specified logger.
     /// </summary>
     /// <param name="logger">The logger to use for diagnostic messages.</param>
     /// <param name="seed">The seed for the random number generator.</param>
-    public PortAllocator(ILogger<PortAllocator> logger, int seed) : this(new Random(seed), logger) { }
+    public PortAllocator(ILogger<PortAllocator> logger, int seed) : this(logger, new PortAllocatorOptions() { Seed = seed }) { }
 
     /// <summary>
     /// Gets the <see cref="BitArray"/> representing the allocation status of all ports.
@@ -176,34 +219,222 @@ public partial class PortAllocator
                 if (allocatedPorts is null)
                 {
                     allocatedPorts = new BitArray(65536);
-                    foreach (var avoidPort in avoidPorts)
-                    {
-                        allocatedPorts[avoidPort] = true;
-                    }
-
-                    try
-                    {
-                        var ipGlobalProperties = IPGlobalProperties.GetIPGlobalProperties();
-                        var tcpConnInfoArray = ipGlobalProperties.GetActiveTcpConnections();
-
-                        foreach (var tcpci in tcpConnInfoArray)
-                        {
-                            allocatedPorts[tcpci.LocalEndPoint.Port] = true;
-                        }
-
-                        var tcpListenerArray = ipGlobalProperties.GetActiveTcpListeners();
-                        foreach (var tcpl in tcpConnInfoArray)
-                        {
-                            allocatedPorts[tcpl.LocalEndPoint.Port] = true;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        LogErrorCheckingAllocatedPorts(logger, ex, ex.Message);
-                    }
+                    if (options.ExcludeWellKnownPorts)
+                        PortAllocator.ExcludeWellKnownPorts(allocatedPorts);
+                    ExcludePorts(allocatedPorts, this.options.ExcludedPorts);
+                    if (options.ScanInUsePorts)
+                        TryScanInUsePorts_Internal(allocatedPorts);
+                    if (options.ExcludeEphemeralPorts)
+                        ExcludeEphemeralPorts(allocatedPorts);
+                    if (options.ScanExcludedPorts)
+                        ScanExcludedPorts(allocatedPorts);
                 }
             }
             return allocatedPorts;
+        }
+    }
+
+    /// <summary>
+    /// Marks well-known ports as allocated in the provided <see cref="BitArray"/>.
+    /// </summary>
+    /// <param name="allocatedPorts">The <see cref="BitArray"/> to update.</param>
+    private static void ExcludeWellKnownPorts(BitArray allocatedPorts)
+    {
+        foreach (var avoidPort in avoidPorts)
+        {
+            allocatedPorts[avoidPort] = true;
+        }
+    }
+
+    /// <summary>
+    /// Marks the specified ports as allocated in the provided <see cref="BitArray"/>.
+    /// </summary>
+    /// <param name="allocatedPorts">The <see cref="BitArray"/> to update.</param>
+    /// <param name="ports">The ports to exclude.</param>
+    private void ExcludePorts(BitArray allocatedPorts, IEnumerable<int> ports)
+    {
+        foreach (var avoidPort in ports)
+        {
+            if (avoidPort < 1 || avoidPort > 65535)
+            {
+                LogErrorExcludePortOutsideRange(logger, avoidPort);
+            }
+            allocatedPorts[avoidPort] = true;
+        }
+    }
+
+    /// <summary>
+    /// Scans for in-use ports and marks them as allocated.
+    /// </summary>
+    /// <returns><c>true</c> if the scan succeeded; otherwise, <c>false</c>.</returns>
+    public bool TryScanInUsePorts()
+    {
+        var ap = AllocatedPorts;
+        lock (@lock)
+        {
+            return TryScanInUsePorts_Internal(ap);
+        }
+    }
+
+    /// <summary>
+    /// Scans for in-use ports and marks them as allocated in the provided <see cref="BitArray"/>.
+    /// </summary>
+    /// <param name="allocatedPorts">The <see cref="BitArray"/> to update.</param>
+    /// <returns><c>true</c> if the scan succeeded; otherwise, <c>false</c>.</returns>
+    private bool TryScanInUsePorts_Internal(BitArray allocatedPorts)
+    {
+        try
+        {
+            var ipGlobalProperties = IPGlobalProperties.GetIPGlobalProperties();
+            var tcpConnInfoArray = ipGlobalProperties.GetActiveTcpConnections();
+
+            foreach (var tcpci in tcpConnInfoArray)
+            {
+                allocatedPorts[tcpci.LocalEndPoint.Port] = true;
+            }
+
+            var tcpListenerArray = ipGlobalProperties.GetActiveTcpListeners();
+            foreach (var tcpl in tcpConnInfoArray)
+            {
+                allocatedPorts[tcpl.LocalEndPoint.Port] = true;
+            }
+            return true;
+        }
+        catch (Exception ex)
+        {
+            LogErrorCheckingAllocatedPorts(logger, ex, ex.Message);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Excludes ephemeral ports from allocation by marking them as allocated.
+    /// </summary>
+    /// <param name="allocatedPorts">The <see cref="BitArray"/> to update.</param>
+    private void ExcludeEphemeralPorts(BitArray allocatedPorts)
+    {
+        try
+        {
+            switch (System.Environment.OSVersion.Platform)
+            {
+                case PlatformID.Unix:
+                    ExcludeEphemeralPorts_Unix(allocatedPorts);
+                    break;
+                case PlatformID.Win32NT:
+                    ExcludeEphemeralPorts_Windows(allocatedPorts);
+                    break;
+                default:
+                    LogUnsupportedPlatformForEphemeralPortExclusion(logger, System.Environment.OSVersion.Platform);
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            LogErrorCheckingEphemeralPorts(logger, ex, ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Excludes ephemeral ports on Windows by marking them as allocated.
+    /// </summary>
+    /// <param name="allocatedPorts">The <see cref="BitArray"/> to update.</param>
+    private void ExcludeEphemeralPorts_Windows(BitArray allocatedPorts)
+    {
+        // Use netsh to scan for excluded ports on Windows
+        using (var process = new System.Diagnostics.Process())
+        {
+            process.StartInfo.FileName = "netsh";
+            process.StartInfo.Arguments = "int ipv4 show excludedportrange tcp";
+            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.CreateNoWindow = true;
+            process.Start();
+            process.WaitForExit();
+            var output = process.StandardOutput.ReadToEnd();
+            if (EphemeralPortRangeRegEx_Windows().Match(output) is Match match)
+            {
+                var start = int.Parse(match.Groups["start"].Value);
+                var end = start + int.Parse(match.Groups["count"].Value) - 1;
+                for (int i = start; i <= end; i++)
+                {
+                    allocatedPorts[i] = true;
+                }
+            }
+            else
+            {
+                LogFailedToParseEphemeralPortRangeWindows(logger, output);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Excludes ephemeral ports on Unix by marking them as allocated.
+    /// </summary>
+    /// <param name="allocatedPorts">The <see cref="BitArray"/> to update.</param>
+    private void ExcludeEphemeralPorts_Unix(BitArray allocatedPorts)
+    {
+        var output = System.IO.File.ReadAllText("/proc/sys/net/ipv4/ip_local_port_range");
+        if (EphemeralPortRangeRegEx_Unix().Match(output) is Match match)
+        {
+            var start = int.Parse(match.Groups["start"].Value);
+            var end = int.Parse(match.Groups["end"].Value);
+            for (int i = start; i <= end; i++)
+            {
+                allocatedPorts[i] = true;
+            }
+        }
+        else
+        {
+            LogFailedToParseEphemeralPortRangeUnix(logger, output);
+        }
+    }
+
+    /// <summary>
+    /// Scans for excluded ports (e.g., reserved by the OS) and marks them as allocated.
+    /// </summary>
+    /// <param name="allocatedPorts">The <see cref="BitArray"/> to update.</param>
+    private void ScanExcludedPorts(BitArray allocatedPorts)
+    {
+        try
+        {
+            if (System.Environment.OSVersion.Platform == PlatformID.Win32NT)
+            {
+                // Use netsh to scan for excluded ports on Windows
+                using (var process = new System.Diagnostics.Process())
+                {
+                    process.StartInfo.FileName = "netsh";
+                    process.StartInfo.Arguments = "int ipv4 show excludedportrange tcp";
+                    process.StartInfo.RedirectStandardOutput = true;
+                    process.StartInfo.UseShellExecute = false;
+                    process.StartInfo.CreateNoWindow = true;
+                    process.Start();
+                    process.WaitForExit();
+                    var output = process.StandardOutput.ReadToEnd();
+                    ExcludedPortRangeRegex().Matches(output)
+                        .Cast<Match>()
+                        .Select(m => new
+                        {
+                            Start = int.Parse(m.Groups["start"].Value),
+                            End = int.Parse(m.Groups["end"].Value)
+                        })
+                        .ToList()
+                        .ForEach(range =>
+                        {
+                            for (int i = range.Start; i <= range.End; i++)
+                            {
+                                allocatedPorts[i] = true;
+                            }
+                        });
+                }
+            }
+            else
+            {
+                LogUnsupportedPlatformForScanExcludedPorts(logger, System.Environment.OSVersion.Platform);
+            }
+        }
+        catch (Exception ex)
+        {
+            LogErrorCheckingExcludedPorts(logger, ex, ex.Message);
         }
     }
 
@@ -385,7 +616,7 @@ public partial class PortAllocator
     /// <returns>
     /// A randomly selected free port number in the default range.
     /// </returns>
-    public int GetRandomFreePort() => GetRandomFreePort(1000, 65535);
+    public int GetRandomFreePort() => GetRandomFreePort(options.DefaultMinPort, options.DefaultMaxPort);
 
     /// <summary>
     /// Gets the number of free (unallocated) ports in the entire port range.

@@ -163,62 +163,6 @@ public partial class PortAllocator
     /// <param name="seed">The seed for the random number generator.</param>
     public PortAllocator(ILogger<PortAllocator> logger, int seed) : this(new Random(seed), logger) { }
 
-    [LoggerMessage(
-        EventId = 1,
-        Level = LogLevel.Debug,
-        Message = "Port {Port} marked as used."
-    )]
-    private static partial void LogPortMarkedAsUsed(ILogger logger, int port);
-
-    [LoggerMessage(
-        EventId = 2,
-        Level = LogLevel.Debug,
-        Message = "Port {Port} marked as free."
-    )]
-    private static partial void LogPortMarkedAsFree(ILogger logger, int port);
-
-    [LoggerMessage(
-        EventId = 3,
-        Level = LogLevel.Debug,
-        Message = "Port {Port} is already free."
-    )]
-    private static partial void LogPortAlreadyFree(ILogger logger, int port);
-
-    [LoggerMessage(
-        EventId = 4,
-        Level = LogLevel.Debug,
-        Message = "Port {Port} is already allocated."
-    )]
-    private static partial void LogPortAlreadyAllocated(ILogger logger, int port);
-
-    [LoggerMessage(
-        EventId = 5,
-        Level = LogLevel.Debug,
-        Message = "Port {Port} successfully marked as used."
-    )]
-    private static partial void LogPortSuccessfullyMarkedAsUsed(ILogger logger, int port);
-
-    [LoggerMessage(
-        EventId = 6,
-        Level = LogLevel.Debug,
-        Message = "Allocated random free port: {Port}"
-    )]
-    private static partial void LogAllocatedRandomFreePort(ILogger logger, int port);
-
-    [LoggerMessage(
-        EventId = 7,
-        Level = LogLevel.Warning,
-        Message = "Minimum port {MinPort} is below the recommended range of 1000."
-    )]
-    private static partial void LogMinPortBelowRecommended(ILogger logger, int minPort);
-
-    [LoggerMessage(
-        EventId = 8,
-        Level = LogLevel.Warning,
-        Message = "Error while checking allocated ports: {Message}"
-    )]
-    private static partial void LogErrorCheckingAllocatedPorts(ILogger logger, Exception exception, string message);
-
     /// <summary>
     /// Gets the <see cref="BitArray"/> representing the allocation status of all ports.
     /// Ports marked as <c>true</c> are considered allocated or unavailable.

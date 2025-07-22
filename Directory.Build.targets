@@ -47,27 +47,28 @@
       <ProjectReferenceFound ParameterType="System.Boolean" Output="true" />
     </ParameterGroup>
     <Task>
-      <!--<Using Namespace="System.Linq" />-->
       <Code Type="Fragment" Language="cs">
-        ProjectReferenceFound = false;
-        foreach(var pr in ProjectReference)
-        {
-        Log.LogMessage(MessageImportance.Low, "Project Reference: {0}", pr.ItemSpec);
-        foreach(var ptb in ProjectToBuild)
-        {
-        Log.LogMessage(MessageImportance.Low, "Project To Build: {0}", ptb.ItemSpec);
-        if (pr.GetMetadata("Filename").Equals(ptb.ItemSpec, StringComparison.OrdinalIgnoreCase))
-        {
-        Log.LogMessage(MessageImportance.High, "Found matching project reference: {0} {1}", pr.ItemSpec, ptb.ItemSpec);
-        ProjectReferenceFound = true;
-        foreach(string metadataName in pr.MetadataNames)
-        {
-        Log.LogMessage(MessageImportance.High, "Metadata: {0} = {1}", metadataName, pr.GetMetadata(metadataName));
-        }
-        }
-        }
-        }
-      </Code>
+        <![CDATA[
+          ProjectReferenceFound = false;
+          foreach(var pr in ProjectReference)
+          {
+            Log.LogMessage(MessageImportance.Low, "Project Reference: {0}", pr.ItemSpec);
+            foreach(var ptb in ProjectToBuild)
+            {
+              Log.LogMessage(MessageImportance.Low, "Project To Build: {0}", ptb.ItemSpec);
+              if (pr.GetMetadata("Filename").Equals(ptb.ItemSpec, StringComparison.OrdinalIgnoreCase))
+              {
+                Log.LogMessage(MessageImportance.High, "Found matching project reference: {0} {1}", pr.ItemSpec, ptb.ItemSpec);
+                ProjectReferenceFound = true;
+                foreach(string metadataName in pr.MetadataNames)
+                {
+                  Log.LogMessage(MessageImportance.High, "Metadata: {0} = {1}", metadataName, pr.GetMetadata(metadataName));
+                }
+              }
+            }
+          }
+        ]]>
+        </Code>
     </Task>
   </UsingTask>
   
@@ -91,7 +92,7 @@
       <Output TaskParameter="ConsoleOutput" ItemName="ProjectCommitID" />
     </Exec>
     <ItemGroup>
-      <ProjectCommitID Condition="'%(Identity)' != '' AND                                   '@(ProjectCommitID)' != '' AND                                   '@(_Temporary)' != ''">
+      <ProjectCommitID Condition="'%(Identity)' != '' AND '@(ProjectCommitID)' != '' AND '@(_Temporary)' != ''">
         <CommitIDFound>true</CommitIDFound>
       </ProjectCommitID>
     </ItemGroup>

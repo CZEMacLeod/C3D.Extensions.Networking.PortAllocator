@@ -1,13 +1,11 @@
-﻿using CommunityToolkit.Diagnostics;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net.NetworkInformation;
-using System.Threading;
+using System.Runtime.CompilerServices;
 
 namespace C3D.Extensions.Networking;
 
@@ -271,7 +269,7 @@ public partial class PortAllocator
     /// <exception cref="InvalidOperationException">Thrown if the port is already allocated.</exception>
     public void MarkPortAsUsed(int port)
     {
-        Guard.IsBetween(port, 0, 65536, nameof(port));
+        ValidatePortRange(port);
         lock (@lock)
         {
             var ap = AllocatedPorts;
@@ -282,6 +280,23 @@ public partial class PortAllocator
             ap[port] = true;
         }
         LogPortMarkedAsUsed(logger, port);
+    }
+
+    private static void ValidatePortRange(int port, [CallerArgumentExpression(nameof(port))] string paramName = null!)
+    {
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(port, 65535, paramName);
+        ArgumentOutOfRangeException.ThrowIfLessThan(port, 1, paramName);
+    }
+    private static void ValidatePortsRange(int minPort, int maxPort, 
+        [CallerArgumentExpression(nameof(minPort))] string minName = null!,
+        [CallerArgumentExpression(nameof(maxPort))] string maxName = null!)
+    {
+        ValidatePortRange(minPort, minName);
+        ValidatePortRange(maxPort, maxName);
+        if (minPort > maxPort)
+        {
+            throw new ArgumentOutOfRangeException(maxName, maxPort, $"{maxName} ({maxPort}) must be greater than {minName} ({minPort}).");
+        }
     }
 
     /// <summary>
@@ -295,7 +310,7 @@ public partial class PortAllocator
     /// <exception cref="ArgumentOutOfRangeException">Thrown if <paramref name="port"/> is outside the valid range.</exception>
     public bool MarkPortAsFree(int port)
     {
-        Guard.IsBetween(port, 0, 65536, nameof(port));
+        ValidatePortRange(port);
         bool used;
         lock (@lock)
         {
@@ -325,7 +340,7 @@ public partial class PortAllocator
     /// <exception cref="ArgumentOutOfRangeException">Thrown if <paramref name="port"/> is outside the valid range.</exception>
     public bool TryMarkPortAsUsed(int port)
     {
-        Guard.IsBetween(port, 0, 65536, nameof(port));
+        ValidatePortRange(port);
         bool used;
         lock (@lock)
         {
@@ -361,9 +376,7 @@ public partial class PortAllocator
     /// </exception>
     public int GetRandomFreePort(int minPort, int maxPort = 65535)
     {
-        Guard.IsBetween(minPort, 0, 65536, nameof(minPort));
-        Guard.IsBetween(maxPort, 0, 65536, nameof(maxPort));
-        Guard.IsGreaterThanOrEqualTo(maxPort, minPort, nameof(maxPort));
+        ValidatePortsRange(minPort, maxPort);
 
         if (minPort < 1000)
         {
@@ -387,6 +400,8 @@ public partial class PortAllocator
         return port;
     }
 
+
+
     /// <summary>
     /// Attempts to allocate a random free port within the specified range.
     /// </summary>
@@ -406,9 +421,7 @@ public partial class PortAllocator
     /// </exception>
     public bool TryGetRandomFreePort(int minPort, int maxPort, [MaybeNullWhen(false)] out int port)
     {
-        Guard.IsBetween(minPort, 0, 65536, nameof(minPort));
-        Guard.IsBetween(maxPort, 0, 65536, nameof(maxPort));
-        Guard.IsGreaterThanOrEqualTo(maxPort, minPort, nameof(maxPort));
+        ValidatePortsRange(minPort, maxPort);
 
         if (minPort < 1000)
         {
@@ -463,9 +476,8 @@ public partial class PortAllocator
     /// </exception>
     public int GetFreePortCount(int minPort, int maxPort)
     {
-        Guard.IsBetween(minPort, 0, 65536, nameof(minPort));
-        Guard.IsBetween(maxPort, 0, 65536, nameof(maxPort));
-        Guard.IsGreaterThanOrEqualTo(maxPort, minPort, nameof(maxPort));
+        ValidatePortsRange(minPort, maxPort);
+
         lock (@lock)
         {
             var ap = AllocatedPorts;
@@ -489,9 +501,7 @@ public partial class PortAllocator
     /// </exception>
     public int[] GetFreePorts(int minPort, int maxPort)
     {
-        Guard.IsBetween(minPort, 0, 65536, nameof(minPort));
-        Guard.IsBetween(maxPort, 0, 65536, nameof(maxPort));
-        Guard.IsGreaterThanOrEqualTo(maxPort, minPort, nameof(maxPort));
+        ValidatePortsRange(minPort, maxPort);
 
         lock (@lock)
         {

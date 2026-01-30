@@ -34,6 +34,7 @@ jobs:
         dotnet-version: |
             8.0.x
             9.0.x
+            10.0.x
 
     # Restore the application to populate the obj folder with RuntimeIdentifiers
     - name: Restore the application
@@ -41,13 +42,16 @@ jobs:
 
     # Build the application
     - name: Build the application
-      run: dotnet build --no-restore --configuration Release /p:ContinuousIntegrationBuild=true
+      run: dotnet build --no-restore --configuration Release /p:ContinuousIntegrationBuild=true '/p:AfterMicrosoftNETSdkTargets=${{ github.workspace }}\build\vs-workaround.targets'
 
     - name: Run tests 8.0
-      run: dotnet test --no-restore --no-build --configuration Release --logger "console;verbosity=detailed" --logger "trx;verbosity=normal" --collect:"XPlat Code Coverage" --results-directory "TestResults/net8.0" -f net8.0
+      run: dotnet test --no-restore --no-build --configuration Release --logger "console;verbosity=detailed" --logger "trx;verbosity=normal" --collect:"XPlat Code Coverage" --results-directory "TestResults/net8.0" -f net8.0 '/p:AfterMicrosoftNETSdkTargets=${{ github.workspace }}\build\vs-workaround.targets'
 
     - name: Run tests 9.0
-      run: dotnet test --no-restore --no-build --configuration Release --logger "console;verbosity=detailed" --logger "trx;verbosity=normal" --collect:"XPlat Code Coverage" --results-directory "TestResults/net9.0" -f net8.0
+      run: dotnet test --no-restore --no-build --configuration Release --logger "console;verbosity=detailed" --logger "trx;verbosity=normal" --collect:"XPlat Code Coverage" --results-directory "TestResults/net9.0" -f net8.0 '/p:AfterMicrosoftNETSdkTargets=${{ github.workspace }}\build\vs-workaround.targets'
+
+      name: Run tests 10.0
+      run: dotnet test --no-restore --no-build --configuration Release --logger "console;verbosity=detailed" --logger "trx;verbosity=normal" --collect:"XPlat Code Coverage" --results-directory "TestResults/net9.0" -f net8.0 '/p:AfterMicrosoftNETSdkTargets=${{ github.workspace }}\build\vs-workaround.targets'
 
     # - name: Upload dotnet 8.0 test results
     #   uses: actions/upload-artifact@v4

@@ -50,7 +50,7 @@ jobs:
     - name: Run tests 9.0
       run: dotnet test --no-restore --no-build --configuration Release --logger "console;verbosity=detailed" --logger "trx;verbosity=normal" --collect:"XPlat Code Coverage" --results-directory "TestResults/net9.0" -f net8.0 '/p:AfterMicrosoftNETSdkTargets=${{ github.workspace }}\build\vs-workaround.targets'
 
-      name: Run tests 10.0
+    - name: Run tests 10.0
       run: dotnet test --no-restore --no-build --configuration Release --logger "console;verbosity=detailed" --logger "trx;verbosity=normal" --collect:"XPlat Code Coverage" --results-directory "TestResults/net9.0" -f net8.0 '/p:AfterMicrosoftNETSdkTargets=${{ github.workspace }}\build\vs-workaround.targets'
 
     # - name: Upload dotnet 8.0 test results

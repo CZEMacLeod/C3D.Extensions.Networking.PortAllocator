@@ -240,10 +240,10 @@ steps:
       -kvc "c3d-codesign" `
       -v information `
       -t "$(timestamper)" `
-    env:
-      AZURE_TENANT_ID: $(SignTenantId)
-      AZURE_CLIENT_ID: $(SignClientId)
-      AZURE_CLIENT_SECRET: $(SignClientSecret)
+  env:
+    AZURE_TENANT_ID: $(SignTenantId)
+    AZURE_CLIENT_ID: $(SignClientId)
+    AZURE_CLIENT_SECRET: $(SignClientSecret)
 
 - task: PublishBuildArtifacts@1
   inputs:

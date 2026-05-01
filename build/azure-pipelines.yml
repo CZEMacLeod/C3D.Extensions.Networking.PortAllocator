@@ -243,7 +243,7 @@ steps:
       -kvu "$(SignVaultURL)" `
       -kvc "c3d-codesign" `
       -v information `
-      -t "$(timestamper)" `
+      -t "$(timestamper)"
 
 - task: PublishBuildArtifacts@1
   inputs:

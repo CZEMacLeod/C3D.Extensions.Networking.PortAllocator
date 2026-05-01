@@ -3,8 +3,8 @@
   "version": "0.1",
   "pathFilters": [
     ".",
-    "../../../Directory.Build.props",
-    "../../../Directory.Build.targets",
+    "../../Directory.Build.props",
+    "../../Directory.Build.targets",
     "../../../../../Directory.Build.props",
     "../../../../../Directory.Build.targets"
   ],

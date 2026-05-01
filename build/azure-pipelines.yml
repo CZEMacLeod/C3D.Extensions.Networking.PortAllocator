@@ -232,7 +232,7 @@ steps:
   inputs:
     targetType: inline
     script: |
-      sign code azure-key-vault **/*.nupkg **/*.snupkg `
+      sign code azure-key-vault **\*.nupkg **\*.snupkg `
       --base-directory "$(Build.ArtifactStagingDirectory)" `
       -d "Cynthia Z E MacLeod" `
       -u "https://github.com/CZEMacLeod" `

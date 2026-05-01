@@ -181,7 +181,7 @@ steps:
     clean: true
     msbuildArgs: '/t:$(target) /p:"ProjectToBuild=$(project_to_build)" /p:ContinuousIntegrationBuild=true /p:PackageOutputPath="$(Build.ArtifactStagingDirectory)" /p:BuildUser="$(buildUser)" /p:BuildMachine="$(buildMachine)" /p:AssemblyOriginatorKeyFile="$(snk.secureFilePath)" /p:AfterMicrosoftNETSdkTargets="$(Build.SourcesDirectory)\build\vs-workaround.targets"'
 
-- task: VSTest@2
+- task: VSTest@3
   inputs:
    testSelector: 'testAssemblies'
    testAssemblyVer2: |
@@ -201,6 +201,7 @@ steps:
    failOnMinTestsNotRunFail: false
    failIfCoverageEmpty: false
    resultsFolder: '$(Agent.TempDirectory)\TestResults'
+   rerunFailedTests: true
 
 - task: PublishTestResults@2
   condition: always()
@@ -224,10 +225,6 @@ steps:
   env:
     branchName: $(variables['branchName'])
 
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(build.artifactstagingdirectory)'
-
 # Run the signing command
 - task: PowerShell@2
   displayName: Sign packages
@@ -236,7 +233,7 @@ steps:
     targetType: inline
     script: |
       sign code azure-key-vault `
-      "**/*.nupkg" `
+      "**/*.nupkg" "**/*.nupkg" "**/*.snupkg" `
       --base-directory "$(Build.ArtifactStagingDirectory)" `
       -d "Cynthia Z E MacLeod" `
       -u "https://github.com/CZEMacLeod" `
@@ -247,6 +244,10 @@ steps:
       --azure-key-vault-tenant-id "$(SignTenantId)" `
       --azure-key-vault-client-id "$(SignClientId)" `
       --azure-key-vault-client-secret '$(SignClientSecret)'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(build.artifactstagingdirectory)'
 
 - task: CopyFiles@2
   displayName: Create nuget publish config

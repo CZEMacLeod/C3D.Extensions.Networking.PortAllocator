@@ -9,3 +9,23 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
+    groups:
+      global:
+        patterns:
+          - "Microsoft.Build.CopyOnWrite"
+          - "Microsoft.SourceLink.GitHub"
+      tests:
+        patterns:
+          - "coverlet.collector"
+          - "coverlet.msbuild"
+          - "Microsoft.NET.Test.Sdk"
+          - "xunit*"
+      build:
+        patterns:
+          - "Nerdbank.GitVersioning"
+          - "PolySharp"
+      runtime:
+        patterns:
+          - "Microsoft.Extensions.*"
+          - "System.*"
+         

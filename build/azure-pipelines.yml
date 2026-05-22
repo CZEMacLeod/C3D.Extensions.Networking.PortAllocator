@@ -40,6 +40,8 @@ trigger:
     exclude:
     - docs/*
     - README.md
+    - tests/*
+    - .github/*
 
 pr: none
 
